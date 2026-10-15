@@ -11,7 +11,7 @@ start:
 	movlw	0xFF
 	movwf	TRISE, A
 	movlw 	0x0
-	movwf	TRISC, A	    ; Port C all outputs
+	movwf	TRISD, A	    ; Port C all outputs
 	
 	bra 	test
 loop:
