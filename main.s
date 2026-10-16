@@ -8,29 +8,29 @@ main:
 
 	org	0x100		    ; Main code starts here at address 0x100
 start:
-	movlw	0x02		    ; Sets up delay funcion
-	movwf	0x07, A
 	call	SPI_MasterInit
 	movlw	0x00
+	movwf	TRISH, A	;set port E as output for debugging
 	bra	test
 	
-SPI_MasterInit:	; Set Clock edge to negative?
-	bcf	CKE2	; CKE bit in SSP2STAT, ?
-	; MSSP enable; CKP=1; SPI master, clock=Fosc/64 (1MHz)?
-	movlw 	(SSP2CON1_SSPEN_MASK)|(SSP2CON1_CKP_MASK)|(SSP2CON1_SSPM1_MASK)?
-	movwf 	SSP2CON1, A?
-	; SDO2 output; SCK2 output?
-	bcf	TRISD, PORTD_SDO2_POSN, A	; SDO2 output?
-	bcf	TRISD, PORTD_SCK2_POSN, A	; SCK2 output?
-	return ?
-?
-SPI_MasterTransmit:  ; Start transmission of data (held in W)?
-	movwf 	SSP2BUF, A 	; write data to output buffer?
+SPI_MasterInit:	; Set Clock edge to negative
+	bcf	CKE2	; CKE bit in SSP2STAT, 
+	; MSSP enable; CKP=1; SPI master, clock=Fosc/64 (1MHz)
+	movlw 	(SSP2CON1_SSPEN_MASK)|(SSP2CON1_CKP_MASK)|(SSP2CON1_SSPM1_MASK)
+	movwf 	SSP2CON1, A
+	; SDO2 output; SCK2 output
+	bcf	TRISD, PORTD_SDO2_POSN, A	; SDO2 output
+	bcf	TRISD, PORTD_SCK2_POSN, A	; SCK2 output
+	return 
+
+SPI_MasterTransmit:  ; Start transmission of data (held in W)
+	movwf	PORTH, A
+	movwf 	SSP2BUF, A 	; write data to output buffer
 	
-Wait_Transmit:	; Wait for transmission to complete ?
-	btfss 	PIR2, 5		; check interrupt flag to see if data has been sent?
-	bra 	Wait_Transmit?
-	bcf 	PIR2, 5		; clear interrupt flag?
+Wait_Transmit:	; Wait for transmission to complete 
+	btfss 	PIR2, 5		; check interrupt flag to see if data has been sent
+	bra 	Wait_Transmit
+	bcf 	PIR2, 5		; clear interrupt flag
 	return 
 loop:
 	movf	0x06, W, A
@@ -45,8 +45,10 @@ loop_dec:
 	bra	test2
     
 test:
-	;call	delay
 	movwf	0x06, A	    ; Test for end of loop condition
+	movlw	0x40		    ; Sets up delay funcion
+	movwf	0x08, A
+	call	extra_delay
 	movlw 	0xFF
 	; movf	PORTE, W, A	    ; Option to input limit at portE	
 	cpfseq 	0x06, A
@@ -54,8 +56,10 @@ test:
 	bra	loop_dec
 
 test2:	
-	call	delay
 	movwf	0x06, A	    ; Test for end of loop condition
+	movlw	0x40		    ; Sets up delay funcion
+	movwf	0x08, A
+	call	extra_delay
 	movlw 	0x00		
 	cpfseq 	0x06, A
 	bra	loop_dec
@@ -65,5 +69,22 @@ delay:
 	decfsz	0x07, A
 	bra	delay
 	return
+
+extra_delay:
+	movlw	0xFF		    ; Sets up delay funcion
+	movwf	0x07, A
+	call delay
+	decfsz 0x08, A
+	bra extra_delay
+	return
+
+extra_extra_delay:
+	movlw	0xFF
+	movwf	0x08, A
+	call	extra_delay
+   	decfsz 0x09, A
+	bra extra_extra_delay
+	return
+
     
 	end	main
